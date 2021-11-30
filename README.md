@@ -1,8 +1,8 @@
 # TinyWebSever-CPP
 
-[![LICENSE](https://img.shields.io/badge/license-GPL-green)](http://www.buaamsc.com:7929/SY2006304/ACR.pytorch/-/blob/main/LICENSE)
-[![ubuntu](https://img.shields.io/badge/ubuntu-18.04-%237732a8)](https://www.python.org/)
-[![mysql](https://img.shields.io/badge/mysql-5.7.36-blue)](https://www.python.org/)
+[![LICENSE](https://img.shields.io/badge/license-Apache2.0-green)]()
+[![ubuntu](https://img.shields.io/badge/ubuntu-18.04-%237732a8)]()
+[![mysql](https://img.shields.io/badge/mysql-5.7.36-blue)]()
 
 基于C++开发的简单Web服务器:sunny:
 
