@@ -4,8 +4,8 @@
 int main(int argc, char *argv[]){
     // 数据库用户名、密码、库名
     string user = "root";
-    string passwd = "4869";
-    string databasename = "webserver";
+    string password = "4869";
+    string database_name = "webserver";
 
     //命令行解析
     Config config;
@@ -14,11 +14,10 @@ int main(int argc, char *argv[]){
     WebServer server;
 
     //初始化
-    server.init(config.PORT, user, passwd, databasename, config.LOGWrite, 
-                config.OPT_LINGER, config.TRIGMode,  config.sql_num,  config.thread_num, 
+    server.init(config.port, user, password, database_name, config.log_write, 
+                config.opt_linger, config.trig_mode, config.sql_num, config.thread_num, 
                 config.close_log, config.actor_model);
     
-
     //日志
     server.log_write();
 

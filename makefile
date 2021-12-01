@@ -10,4 +10,4 @@ server: $(OBJS)
 	$(CXX) $(CFLAGS) $(OBJS) -o ./bin/$(TARGET) -pthread -lmysqlclient
 
 clean:
-	rm  -r webserver
+	rm  -r ./bin/server

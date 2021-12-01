@@ -18,28 +18,23 @@ public:
         return &instance;
     }
 
-    // 初始化日志类
     bool init(const char *file_name, int close_log, int log_buf_size=8192, int split_lines=5000000, int max_queue_size=0);
-
-    // 线程工作函数，调用异步写
-    static void* flush_log_thread(void *args){
-        Log::get_instance()->async_write_log();
-    }
-
-    // 将输出内容按标准格式整理
     void write_log(int level, const char *format, ...);
-
-    // 强制刷新缓冲区
     void flush(void);
 
 private:
     Log();
-    virtual ~Log();
+    ~Log();
+
+    // 线程工作函数，静态函数防止产生this指针
+    static void* flush_log_thread(void *args){
+        Log::get_instance()->async_write_log();
+    }
 
     // 异步写
-    void* async_write_log(){
+    void async_write_log(){
         string single_log;
-        // 从阻塞队列取出一个日志，写入文件
+        // 从阻塞队列取出一个日志
         while(m_log_queue->pop(single_log)){
             m_mutex.lock();
             // 写入后文件指针后移
@@ -60,7 +55,6 @@ private:
     block_queue<string> *m_log_queue;   //阻塞队列
     bool m_is_async;    // 是否异步
     mutexlocker m_mutex;
-    int m_close_log;    // 关闭日志
 };
 
 // 可变参数宏__VA_ARGS__，当可变参数个数为0时，##__VA_ARGS__把前面多余的“，”去掉

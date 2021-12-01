@@ -1,42 +1,29 @@
-#include <mysql/mysql.h>
-#include <cstdio>
-#include <string>
-#include <cstring>
-#include <cstdlib>
-#include <list>
-#include <pthread.h>
-#include <iostream>
 #include "sql_connection_pool.h"
 
-using namespace std;
-
 connection_pool::connection_pool(){
-    m_CurConn = 0;
-    m_FreeConn = 0;
+    m_cur_conn = 0;
+    m_free_conn = 0;
 }
 
-// RAII机制销毁连接池
 connection_pool::~connection_pool(){
-    DestroyPool();
-}
-
-// 懒汉式单例模式，静态变量只会初始化一次
-connection_pool* connection_pool::GetInstance(){
-    static connection_pool connPool;
-    return &connPool;
+    list<MYSQL*>::iterator iter;
+    for(iter = conn_list.begin(); iter != conn_list.end(); ++iter){
+        MYSQL *conn = *iter;
+        mysql_close(conn);
+    }
 }
 
 // 初始化连接池
-void connection_pool::init(string url, string User, string PassWord, string DataBaseName, int Port, int MaxConn, int close_log){
+void connection_pool::init(string url, string user, string password, string database_name, int port, int max_conn, int close_log){
     m_url = url;
-    m_Port = Port;
-    m_User = User;
-    m_PassWord = PassWord;
-    m_DatabaseName = DataBaseName;
+    m_port = port;
+    m_user = user;
+    m_password = password;
+    m_database_name = database_name;
     m_close_log = close_log;
 
     // 构造连接
-    for(int i = 0; i < MaxConn; ++i){
+    for(int i = 0; i < max_conn; ++i){
         // 初始化一个mysql连接的实例对象，MYSQL* mysql_init(MYSQL *mysql);
         MYSQL* conn = nullptr;
         conn = mysql_init(conn);
@@ -46,26 +33,26 @@ void connection_pool::init(string url, string User, string PassWord, string Data
         }
 
         // 与数据库引擎建立连接
-        // MYSQL* mysql_real_connect(MYSQL *mysql, const char *host, const char *user, const char *passwd, const char *db, 
-        //                           unsigned int port, const char *unix_socket, unsigned long client_flag)
-        conn = mysql_real_connect(conn, url.c_str(), User.c_str(), PassWord.c_str(), DataBaseName.c_str(), Port, nullptr, 0);
+        conn = mysql_real_connect(conn, url.c_str(), user.c_str(), password.c_str(), database_name.c_str(), port, nullptr, 0);
         if(conn == nullptr){
             LOG_ERROR("MySQL real connect Error");
             exit(1);
         }
 
-        connList.push_back(conn);
-        ++m_FreeConn;
+        // 添加到连接链表
+        conn_list.push_back(conn);
+        ++m_free_conn;
     }
 
-    // 创建条件变量
-    reserve = semaphore(m_FreeConn);
-    m_MaxConn = m_FreeConn;
+    // 创建信号量
+    reserve = semaphore(m_free_conn);
+    m_max_conn = m_free_conn;
 }
 
 // 有请求时，从数据库连接池返回一个可用连接
-MYSQL* connection_pool::GetConnetion(){ 
-    if(connList.size() == 0)
+MYSQL* connection_pool::get_connection(){
+    // 无空闲连接
+    if(conn_list.size() == 0)
         return nullptr;
     
     MYSQL *conn = nullptr;
@@ -73,64 +60,45 @@ MYSQL* connection_pool::GetConnetion(){
     reserve.wait();
     // 加互斥锁
     lock.lock();
-    // 取连接池第一个连接，临界区
-    conn = connList.front();
-    connList.pop_front();
+    // 取连接池第一个连接
+    conn = conn_list.front();
+    conn_list.pop_front();
 
-    --m_FreeConn;
-    ++m_CurConn;
+    --m_free_conn;
+    ++m_cur_conn;
 
     lock.unlock();
     return conn;
 }
 
 // 释放当前使用的连接，成功返回true
-bool connection_pool::ReleaseConnection(MYSQL *conn){
+bool connection_pool::release_connection(MYSQL *conn){
     if(conn == nullptr)
         return false;
 
-    // 进入临界区
     lock.lock();
-    connList.push_back(conn);
-    ++m_FreeConn;
-    --m_CurConn;
+    conn_list.push_back(conn);
+    ++m_free_conn;
+    --m_cur_conn;
     lock.unlock();
 
     reserve.post();
     return true;
 }
 
-// 销毁数据库连接池
-void connection_pool::DestroyPool(){
-    lock.lock();
-    // 遍历链表，销毁mysql连接
-    if(connList.size() > 0){
-        list<MYSQL*>::iterator iter;
-        for(iter = connList.begin(); iter != connList.end(); ++iter){
-            MYSQL *conn = *iter;
-            mysql_close(conn);
-        }
-        m_CurConn = 0;
-        m_FreeConn = 0;
-        connList.clear();
-    }
-    lock.unlock();
-}
-
 // 当前空闲连接数
-int connection_pool::GetFreeConn(){
-    return this->m_FreeConn;
+int connection_pool::get_freeconn(){
+    return this->m_free_conn;
 }
-
 
 // 从连接池获取一个数据库连接
 connectionRAII::connectionRAII(MYSQL **conn, connection_pool *connPool){
-    *conn = connPool->GetConnetion();
+    *conn = connPool->get_connection();
     connRAII = *conn;
     poolRAII = connPool;
 }
 
 // 释放持有的数据库连接
 connectionRAII::~connectionRAII(){
-    poolRAII->ReleaseConnection(connRAII);
+    poolRAII->release_connection(connRAII);
 }
