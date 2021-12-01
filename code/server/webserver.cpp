@@ -1,13 +1,27 @@
 #include "webserver.h"
 
-WebServer::WebServer(){
+WebServer::WebServer(string user, string password, string database_name, char *root,
+                     int port, int close_log, int async_log, int sql_num,
+                     int thread_num, int actor_model, int trig_mode, int opt_linger){
+    m_user = user;
+    m_passWord = password;
+    m_databaseName = database_name;
+    m_root = root;
+    m_port = port;
+    m_close_log = close_log;
+    m_async_log = async_log;
+    m_sql_num = sql_num;
+    m_thread_num = thread_num;
+    m_actormodel = actor_model;
+    m_listen_trig_mode = trig_mode & 2;
+    m_conn_trig_mode = trig_mode & 1;
+    m_opt_linger = opt_linger;
+    
     users = new http_conn[MAX_FD];
     users_timer = new client_data[MAX_FD];
-
-    // resource文件夹路径
-    char root[11] = "./resource";
-    m_root = (char *)malloc(strlen(root) + 1);
-    strcpy(m_root, root);
+    log_write();
+    sql_pool();
+    thread_pool();
 }
 
 WebServer::~WebServer(){
@@ -22,38 +36,16 @@ WebServer::~WebServer(){
     free(m_root);
 }
 
-// 初始化服务器
-void WebServer::init(int port, string user, string password, string database_name, int log_write, 
-                     int opt_linger, int trig_mode, int sql_num, int thread_num, int close_log, int actor_model){
-    m_port = port;
-    m_user = user;
-    m_passWord = password;
-    m_databaseName = database_name;
-    m_sql_num = sql_num;
-    m_thread_num = thread_num;
-    m_log_write = log_write;
-    m_opt_linger = opt_linger;
-    m_trig_mode = trig_mode;
-    m_close_log = close_log;
-    m_actormodel = actor_model;
-}
-
-// 设置触发模式
-void WebServer::trig_mode(){
-    m_listen_trig_mode = m_trig_mode & 2;
-    m_conn_trig_mode = m_trig_mode & 1;
-}
-
 // 初始化日志
 void WebServer::log_write(){
     if(m_close_log == 0){
         // 获取单例并初始化
-        if(m_log_write == 1)
+        if(m_async_log == 1)
             // 异步写，需要阻塞队列长度
-            Log::get_instance()->init("./log/ServerLog", m_close_log, 2000, 800000, 800);
+            Log::get_instance()->init("./log/ServerLog", 2000, 800000, 800);
         else
             // 同步写
-            Log::get_instance()->init("./log/ServerLog", m_close_log, 2000, 800000, 0);
+            Log::get_instance()->init("./log/ServerLog", 2000, 800000, 0);
     }
 }
 
