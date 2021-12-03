@@ -21,7 +21,7 @@ const int TIMESLOT = 5;             //最小超时单位
 
 class WebServer{
 public:
-    WebServer(string user, string password, string database_name, char *root,
+    WebServer(string user, string password, string database_name, const char *root,
               int port, int close_log, int async_log, int sql_num,
               int thread_num, int actor_model, int trig_mode, int opt_linger);
     ~WebServer();
@@ -46,7 +46,7 @@ public:
     string m_user;          // 登陆数据库用户名
     string m_passWord;      // 登陆数据库密码
     string m_databaseName;  // 数据库名
-    char *m_root;           // 资源路径
+    const char *m_root;     // 资源路径
     int m_port;             // 端口号
     int m_close_log;        // 关闭日志，0不关闭，1关闭
     int m_async_log;        // 日志写入方式，0同步，1异步
@@ -65,7 +65,7 @@ public:
     Utils utils;
 
     int m_listenfd;         // 监听套接字
-    int m_pipefd[2];
+    int m_pipefd[2];        // 信号本地套接字
 
     int m_epollfd;                          // epoll句柄
     epoll_event events[MAX_EVENT_NUMBER];   // 事件列表

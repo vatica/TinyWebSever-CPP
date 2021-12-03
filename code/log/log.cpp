@@ -47,12 +47,12 @@ bool Log::init(const char *file_name, int log_buf_size, int split_lines, int max
     if(p == nullptr){
         // 将可变参数格式化到字符串中
         // 没有/则直接在当前路径下
-        snprintf(log_full_name, 255, "%d_%02d_%02d_%s", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, file_name);
+        snprintf_nowarn(log_full_name, 255, "%d_%02d_%02d_%s", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, file_name);
     }
     else{
         strcpy(log_name, p+1);  // 日志文件名
         strncpy(dir_name, file_name, p-file_name+1);    // 日志路径
-        snprintf(log_full_name, 255, "%s%d_%02d_%02d_%s", dir_name, my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, log_name);
+        snprintf_nowarn(log_full_name, 255, "%s%d_%02d_%02d_%s", dir_name, my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, log_name);
     }
 
     m_today = my_tm.tm_mday;
@@ -88,17 +88,17 @@ void Log::write_log(int level, const char *format, ...){
         char new_log[256] = {0};
         char tail[16] = {0};
 
-        snprintf(tail, 16, "%d_%02d_%02d_", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday);
+        snprintf_nowarn(tail, 16, "%d_%02d_%02d_", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday);
 
         // 天数变化
         if(m_today != my_tm.tm_mday){
-            snprintf(new_log, 255, "%s%s%s", dir_name, tail, log_name);
+            snprintf_nowarn(new_log, 255, "%s%s%s", dir_name, tail, log_name);
             m_today = my_tm.tm_mday;
             m_count = 0;
         }
         // 日志达到最大行数
         else{
-            snprintf(new_log, 255, "%s%s%s.%lld", dir_name, tail, log_name, m_count / m_split_lines);
+            snprintf_nowarn(new_log, 255, "%s%s%s.%lld", dir_name, tail, log_name, m_count / m_split_lines);
         }
         // 打开新日志
         m_fp = fopen(new_log, "a");
@@ -124,10 +124,12 @@ void Log::write_log(int level, const char *format, ...){
     int n = snprintf(m_buf, 48, "%d-%02d-%02d %02d:%02d:%02d.%06ld %s ",
                     my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday,
                     my_tm.tm_hour, my_tm.tm_min, my_tm.tm_sec, now.tv_usec, s);
+    if(n < 0) abort();
     // 正文
     va_list valst;
     va_start(valst, format);
     int m = vsnprintf(m_buf + n, m_log_buf_size - 1, format, valst);
+    if(m < 0) abort();
     va_end(valst); 
 
     m_buf[n + m] = '\n';

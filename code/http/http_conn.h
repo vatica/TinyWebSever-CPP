@@ -60,7 +60,7 @@ public:
 
 public:
     // 初始化连接
-    void init(int sockfd, const sockaddr_in &addr, char *, int, int, string user, string passwd, string sqlname);
+    void init(int sockfd, const sockaddr_in &addr, const char *, int, int, string user, string passwd, string sqlname);
     // 关闭连接
     void close_conn(bool real_close=true);
     void process();
@@ -73,8 +73,8 @@ public:
     }
     // 初始化数据库读取表
     void initmysql_result(connection_pool *connPool);
-    int timer_flag;
-    int improv;
+    int timer_flag;     // reactor是否处理数据
+    int improv;         // reactor是否处理失败
 
 private:
     void init();
@@ -109,28 +109,27 @@ private:
     bool add_blank_line();
 
 public:
-    static int m_epollfd;
-    static int m_user_count;
-    MYSQL *mysql;
-    int m_state;
+    static int m_epollfd;       // epoll事件表
+    static int m_user_count;    // 客户数量
+    MYSQL *mysql;               // 数据库连接
+    int m_state;                // reactor区分读写任务，0读，1写
 
 private:
-    int m_sockfd;
-    sockaddr_in m_address;
+    int m_sockfd;               // 客户socket
+    sockaddr_in m_address;      // 客户地址
     char m_read_buf[READ_BUFFER_SIZE];
     int m_read_idx;             // 已读数据结尾
     int m_checked_idx;          // 解析进行处
     int m_start_line;           // 解析开始处
     char m_write_buf[WRITE_BUFFER_SIZE];
-    int m_write_idx;
+    int m_write_idx;            // 已写数据结尾
     CHECK_STATE m_check_state;  // 主状态机状态
-    METHOD m_method;
+    METHOD m_method;            // 请求方法
 
     // 解析请求报文变量
     char m_real_file[FILENAME_LEN]; // 实际文件路径
     char *m_url;
     char *m_version;
-    char *m_bersion;
     char *m_host;
     int m_content_length;
     bool m_linger;          // 是否为长连接
@@ -141,17 +140,17 @@ private:
     int m_iv_count;         // 向量元素个数
     int cgi;                // 是否启用POST
     char *m_string;
-    int bytes_to_send;      // 剩余发送字节
-    int bytes_have_send;    // 已发送字节
-    char *doc_root;
+    uint32_t bytes_to_send;      // 剩余发送字节
+    uint32_t bytes_have_send;    // 已发送字节
+    const char *doc_root;        // 资源根目录
 
-    map<string, string> m_users;
+    map<string, string> m_users;    // 用户表
     int m_TRIGMode;         // ET模式
-    int m_close_log;
+    int m_close_log;        // 是否关闭日志
 
-    char sql_user[100];
-    char sql_passwd[100];
-    char sql_name[100];
+    char sql_user[100];     // 数据库用户名
+    char sql_passwd[100];   // 数据库密码
+    char sql_name[100];     // 数据库名
 };
 
 #endif

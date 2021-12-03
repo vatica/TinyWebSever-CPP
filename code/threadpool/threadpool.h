@@ -15,7 +15,7 @@ public:
     // thread_number线程池中线程的数量
     // connPool是数据库连接池指针
     // max_request队列中最大请求数量
-    threadpool(int actor_model, connection_pool *connPool, int thread_number = 8, int max_request = 10000);
+    threadpool(int actor_model, connection_pool *connPool, uint32_t thread_number, uint32_t max_request = 10000);
     ~threadpool();
     // 添加请求
     bool append(T *request, int state);
@@ -28,27 +28,27 @@ private:
     void run();
 
 private:
-    int m_thread_number;    // 线程池中的最大线程数
-    int m_max_request;      // 请求队列中最大请求数
-    pthread_t *m_threads;   // 线程数组，大小为m_thread_number
+    int m_actor_model;              // 处理模式，1 reactor，0 proactor
+    connection_pool *m_connPool;    // 数据库连接
+    uint32_t m_thread_number;       // 线程池中的最大线程数
+    uint32_t m_max_request;         // 请求队列中最大请求数
+    pthread_t *m_threads;           // 线程数组，大小为m_thread_number
     std::list<T*> m_workqueue;      // 请求队列
     mutexlocker m_queuelocker;      // 请求队列互斥锁
     semaphore m_queuestat;          // 是否有任务需要处理信号量
-    connection_pool *m_connPool;    // 数据库连接
-    int m_actor_model;      // 模型切换
 };
 
 // 构造线程池，创建线程
 // 类成员函数参数默认值只在定义或声明其中一处对同一个参数设置
 template <typename T>
-threadpool<T>::threadpool(int actor_model, connection_pool *connPoll, int thread_number, int max_request)
-:m_actor_model(actor_model), m_thread_number(thread_number), m_max_request(max_request), m_threads(nullptr), m_connPool(connPoll){
+threadpool<T>::threadpool(int actor_model, connection_pool *connPoll, uint32_t thread_number, uint32_t max_request)
+:m_actor_model(actor_model), m_connPool(connPoll), m_thread_number(thread_number), m_max_request(max_request), m_threads(nullptr){
     if(thread_number <= 0 || max_request <= 0)
         throw std::exception();
     m_threads = new pthread_t[m_thread_number];
     if(!m_threads)
         throw std::exception();
-    for(int i = 0; i < thread_number; ++i){
+    for(uint32_t i = 0; i < thread_number; ++i){
         // 内存单元、线程属性（默认NULL）、工作函数、传递参数（线程池）
         if(pthread_create(m_threads + i, NULL, worker, this) != 0){
             delete[] m_threads;
@@ -106,9 +106,10 @@ void* threadpool<T>::worker(void *arg){
     // 转换为线程池类
     threadpool *pool = (threadpool *)arg;
     pool->run();
-    return pool;
+    return nullptr;
 }
 
+// 工作函数
 template <typename T>
 void threadpool<T>::run(){
     while(true){
@@ -126,8 +127,10 @@ void threadpool<T>::run(){
         m_queuelocker.unlock();
         if(!request)
             continue;
-        if(1 == m_actor_model){
-            if(0 == request->m_state){
+        // reactor
+        if(m_actor_model == 1){
+            // 读
+            if(request->m_state == 0){
                 if(request->read_once()){
                     request->improv = 1;
                     connectionRAII mysqlcon(&request->mysql, m_connPool);
@@ -138,6 +141,7 @@ void threadpool<T>::run(){
                     request->timer_flag = 1;
                 }
             }
+            // 写
             else{
                 if(request->write()){
                     request->improv = 1;
@@ -148,6 +152,7 @@ void threadpool<T>::run(){
                 }
             }
         }
+        // proactor
         else{
             // 从连接池中取出一个数据库连接 RAII
             connectionRAII mysqlcon(&request->mysql, m_connPool);

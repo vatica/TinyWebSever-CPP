@@ -29,6 +29,7 @@ private:
     // 线程工作函数，静态函数防止产生this指针
     static void* flush_log_thread(void *args){
         Log::get_instance()->async_write_log();
+        return nullptr;
     }
 
     // 异步写
@@ -57,6 +58,8 @@ private:
     mutexlocker m_mutex;
 };
 
+// 检查snprintf返回值，防止warning
+#define snprintf_nowarn(...) (snprintf(__VA_ARGS__) < 0 ? abort() : (void)0)
 // 可变参数宏__VA_ARGS__，当可变参数个数为0时，##__VA_ARGS__把前面多余的“，”去掉
 #define LOG_DEBUG(format, ...) if(m_close_log == 0) {Log::get_instance()->write_log(0, format, ##__VA_ARGS__); Log::get_instance()->flush();}
 #define LOG_INFO(format, ...) if(m_close_log == 0) {Log::get_instance()->write_log(1, format, ##__VA_ARGS__); Log::get_instance()->flush();}

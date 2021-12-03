@@ -18,7 +18,7 @@ public:
     string user = "root";                   // 数据库用户名
     string password = "4869";               // 数据库密码
     string database_name = "webserver";     // 数据库名
-    char *root = "./resource";              // 资源根目录
+    const char *root = "./resource";        // 资源根目录
     
     int port = 8081;        // 端口号，默认8081
     int close_log = 0;      // 关闭日志，默认不关闭，1关闭

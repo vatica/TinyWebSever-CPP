@@ -30,10 +30,10 @@ void http_conn::initmysql_result(connection_pool *connPool){
     MYSQL_RES *result = mysql_store_result(mysql);
 
     // 结果集的列数
-    int num_fields = mysql_num_fields(result);
+    // int num_fields = mysql_num_fields(result);
 
     // 所有字段结构的数组
-    MYSQL_FIELD *fields = mysql_fetch_field(result);
+    // MYSQL_FIELD *fields = mysql_fetch_field(result);
 
     // 将用户名和密码存入map中
     while(MYSQL_ROW row = mysql_fetch_row(result)){
@@ -103,7 +103,7 @@ void http_conn::close_conn(bool real_close){
 }
 
 // 初始化连接
-void http_conn::init(int sockfd, const sockaddr_in &addr, char *root, int TRIGMode, 
+void http_conn::init(int sockfd, const sockaddr_in &addr, const char *root, int TRIGMode, 
                      int close_log, string user, string passwd, string sqlname){
     m_sockfd = sockfd;
     m_address = addr;
@@ -387,9 +387,6 @@ http_conn::HTTP_CODE http_conn::do_request(){
 
     // POST请求，实现登录和注册校验
     if(cgi == 1 && (*(p + 1) == '2' || *(p + 1) == '3')){
-        //根据标志判断是登录检测还是注册检测
-        char flag = m_url[1];
-
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
         strcpy(m_url_real, "/");
         strcat(m_url_real, m_url + 2);

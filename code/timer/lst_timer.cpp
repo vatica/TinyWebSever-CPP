@@ -128,9 +128,10 @@ void sort_timer_lst::add_timer(util_timer *timer, util_timer *lst_head){
 }
 
 void Utils::init(int timeslot){
-    m_TIMESLOT = timeslot;
+    m_timeslot = timeslot;
 }
 
+// 设置非阻塞，读不到数据时返回-1，并且设置errno为EAGAIN
 int Utils::setnonblocking(int fd){
     int old_option = fcntl(fd, F_GETFL);
     int new_option = old_option | O_NONBLOCK;
@@ -138,16 +139,22 @@ int Utils::setnonblocking(int fd){
     return old_option;
 }
 
+// 向epoll注册事件
 void Utils::addfd(int epollfd, int fd, bool one_shot, int TRIGMode){
     epoll_event event;
     event.data.fd = fd;
+    // ET模式
     if(TRIGMode == 1)
-        event.events = EPOLLIN | EPOLLET | EPOLLHUP;
-    else 
-        event.events = EPOLLIN | EPOLLHUP;
+        // EPOLLRDHUP对端关闭
+        event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
+    // 默认LT模式
+    else
+        event.events = EPOLLIN | EPOLLRDHUP;
+    // 只触发一次
     if(one_shot)
         event.events |= EPOLLONESHOT;
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &event);
+    // 设置非阻塞
     setnonblocking(fd);
 }
 
@@ -184,9 +191,12 @@ void Utils::addsig(int sig, void (*handler)(int), bool restart){
     assert(sigaction(sig, &sa, NULL) != -1);
 }
 
+// 定时器触发
 void Utils::timer_handler(){
+    // 处理连接链表
     m_timer_lst.tick();
-    alarm(m_TIMESLOT);
+    // 重新设置时钟
+    alarm(m_timeslot);
 }
 
 void Utils::show_error(int connfd, const char *info){
