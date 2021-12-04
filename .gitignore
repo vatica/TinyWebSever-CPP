@@ -1,2 +1,3 @@
-.vscode
-*ServerLog
+/.vscode
+/log
+/bin
