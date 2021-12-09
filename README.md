@@ -8,11 +8,13 @@
 
 ## 更新日志
 - [x] 2021.11.30 发布第一个版本，来自于[qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer)。
-- [ ] TODO: 暂无。
+- [x] 2021.12.09 添加WebBench压力测试。
+- [] 暂无。
 
 ## 目录
 1. [运行](#运行)
-2. [庖丁解牛](#庖丁解牛)
+2. [测试](#测试)
+3. [庖丁解牛](#庖丁解牛)
 
 ## 运行
 ### 快速运行
@@ -23,7 +25,7 @@
     + Windows、Linux均可
     + Chrome、FireFox
     + 其他浏览器暂无测试
-+ 测试前确认已安装MySQL数据库
++ 测试前确认已安装MySQL数据库并启动MySQL服务
     ```C++
     // 建立yourdb库
     create database yourdb;
@@ -38,30 +40,30 @@
     // 添加数据
     INSERT INTO user(username, passwd) VALUES('name', 'passwd');
     ```
-+ 修改[main.cpp](./code/main.cpp)中的数据库初始化信息
++ 修改[config.h](./code/config/config.h)中的数据库初始化信息
     ```C++
     // 数据库用户名、密码、库名
-    string user = "root";
-    string passwd = "root";
-    string databasename = "yourdb";
+    string user = "username";
+    string password = "password";
+    string database_name = "yourdb";
     ```
 + build
-    ```C++
+    ```
     make server
     ```
 + 启动server
-    ```C++
+    ```
     ./bin/server
     ```
 + 浏览器端
-    ```C++
-    ip:port
+    ```
+    http://ip:port
     ```
 
 ### 个性化运行
 
 ```C++
-./server [-p port] [-l LOGWrite] [-m TRIGMode] [-o OPT_LINGER] [-s sql_num] [-t thread_num] [-c close_log] [-a actor_model]
+./bin/server [-p port] [-l LOGWrite] [-m TRIGMode] [-o OPT_LINGER] [-s sql_num] [-t thread_num] [-c close_log] [-a actor_model]
 ```
 
 + -p，自定义端口号
@@ -90,8 +92,38 @@
 
 示例
 ```C++
-./server -p 9007 -l 1 -m 0 -o 1 -s 10 -t 10 -c 1 -a 1
+./bin/server -p 8081 -l 1 -m 0 -o 1 -s 10 -t 10 -c 1 -a 1
 ```
+
+## 测试
+
+### 测试工具
+[WebBench](https://github.com/EZLippi/WebBench)
+
+### 测试示例
+```
+webbench -c 500 -t 30 http://127.0.0.1:port
+```
++ -c，客户端数
++ -t，运行时间
+
+### 测试结果
+```
+Webbench - Simple Web Benchmark 1.5
+Copyright (c) Radim Kolar 1997-2004, GPL Open Source Software.
+
+Request:
+GET / HTTP/1.0
+User-Agent: WebBench 1.5
+Host: 127.0.0.1
+
+
+Runing info: 500 clients, running 30 sec.
+
+Speed=441846 pages/min, 824775 bytes/sec.
+Requests: 220923 susceed, 0 failed.
+```
+
 ## 庖丁解牛
 
 + [小白视角：一文读懂社长的TinyWebServer](https://huixxi.github.io/2020/06/02/%E5%B0%8F%E7%99%BD%E8%A7%86%E8%A7%92%EF%BC%9A%E4%B8%80%E6%96%87%E8%AF%BB%E6%87%82%E7%A4%BE%E9%95%BF%E7%9A%84TinyWebServer/#more)
