@@ -9,7 +9,7 @@
 ## 更新日志
 - [x] 2021.11.30 发布第一个版本，来自于[qinguoyi/TinyWebServer](https://github.com/qinguoyi/TinyWebServer)。
 - [x] 2021.12.09 添加WebBench压力测试。
-- [] 暂无。
+- [ ] 暂无。
 
 ## 目录
 1. [运行](#运行)
@@ -102,12 +102,13 @@
 
 ### 测试示例
 ```
-webbench -c 500 -t 30 http://127.0.0.1:port
+webbench -c 10000 -t 5 http://127.0.0.1:port/
 ```
 + -c，客户端数
 + -t，运行时间
 
 ### 测试结果
+Note：关闭日志后再测试。
 ```
 Webbench - Simple Web Benchmark 1.5
 Copyright (c) Radim Kolar 1997-2004, GPL Open Source Software.
@@ -118,11 +119,12 @@ User-Agent: WebBench 1.5
 Host: 127.0.0.1
 
 
-Runing info: 500 clients, running 30 sec.
+Runing info: 10000 clients, running 5 sec.
 
-Speed=441846 pages/min, 824775 bytes/sec.
-Requests: 220923 susceed, 0 failed.
+Speed=3345264 pages/min, 6244448 bytes/sec.
+Requests: 278772 susceed, 0 failed.
 ```
++ Proactor，LT + LT，55754 QPS
 
 ## 庖丁解牛
 
