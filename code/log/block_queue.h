@@ -113,6 +113,7 @@ public:
         m_array[m_back] = item;
         m_size++;
 
+        // 广播唤醒，线程竞争
         m_cond.broadcast();
         m_mutex.unlock();
         return true;

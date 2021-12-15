@@ -60,8 +60,8 @@ public:
     connection_pool *m_connPool;    // 数据库连接池
     threadpool<http_conn> *m_pool;  // 线程池
 
-    http_conn *users;               // 请求结构
-    client_data *users_timer;       // 定时器
+    http_conn *users;               // 客户请求结构
+    client_data *users_timer;       // 客户数据结构
     Utils utils;
 
     int m_listenfd;         // 监听套接字

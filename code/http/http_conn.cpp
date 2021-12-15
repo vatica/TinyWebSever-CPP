@@ -700,5 +700,6 @@ void http_conn::process(){
     if(!write_ret){
         close_conn();
     }
+    // 准备好写缓冲，加入监听可写事件
     modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);
 }

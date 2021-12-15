@@ -70,6 +70,7 @@ public:
     Utils(){}
     ~Utils(){}
 
+    // 静态函数避免this指针
     static void sig_handler(int sig);
 
     void init(int timeslot);
