@@ -13,8 +13,8 @@ const char *error_404_form = "The requested file was not found on this server.\n
 const char *error_500_title = "Internal Error";
 const char *error_500_form = "There was an unusual problem serving the request file.\n";
 
-mutexlocker m_lock;
-map<string, string> users;
+mutexlocker m_lock;         // 表互斥锁
+map<string, string> users;  // 内存用户表
 
 void http_conn::initmysql_result(connection_pool *connPool){
     // 从数据库连接池取一个连接
@@ -393,16 +393,16 @@ http_conn::HTTP_CODE http_conn::do_request(){
         strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
         free(m_url_real);
 
-        //将用户名和密码提取出来
-        //user=123&passwd=123
+        // 将用户名和密码提取出来
+        // user=123&password=123
         char name[100], password[100];
         int i;
-        for (i = 5; m_string[i] != '&'; ++i)
+        for(i = 5; m_string[i] != '&'; ++i)
             name[i - 5] = m_string[i];
         name[i - 5] = '\0';
 
         int j = 0;
-        for (i = i + 10; m_string[i] != '\0'; ++i, ++j)
+        for(i = i + 10; m_string[i] != '\0'; ++i, ++j)
             password[j] = m_string[i];
         password[j] = '\0';
 
@@ -410,7 +410,7 @@ http_conn::HTTP_CODE http_conn::do_request(){
             //如果是注册，先检测数据库中是否有重名的
             //没有重名的，进行增加数据
             char *sql_insert = (char *)malloc(sizeof(char) * 200);
-            strcpy(sql_insert, "INSERT INTO user(username, passwd) VALUES(");
+            strcpy(sql_insert, "INSERT INTO user(username, password) VALUES(");
             strcat(sql_insert, "'");
             strcat(sql_insert, name);
             strcat(sql_insert, "', '");
