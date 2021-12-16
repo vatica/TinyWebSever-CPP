@@ -342,7 +342,7 @@ http_conn::HTTP_CODE http_conn::process_read()
         // 取一行数据
         text = get_line();
         m_start_line = m_checked_idx;
-        LOG_INFO("%s", text);
+        LOG_INFO("get line: %s", text);
 
         // 主状态机状态
         switch (m_check_state){
@@ -529,12 +529,14 @@ bool http_conn::write(){
         temp = writev(m_sockfd, m_iv, m_iv_count);
 
         if(temp < 0){
-            // 断开连接
+            // 重试，继续监听写事件
             if(errno == EAGAIN)
             {
                 modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);
+                // 不要断开连接
                 return true;
             }
+            // 断开连接
             unmap();
             return false;
         }
@@ -594,7 +596,7 @@ bool http_conn::add_response(const char *format, ...){
     m_write_idx += len;
     va_end(arg_list);
 
-    LOG_INFO("request:%s", m_write_buf);
+    LOG_INFO("add response: %s", m_write_buf);
     return true;
 }
 
@@ -692,6 +694,7 @@ bool http_conn::process_write(HTTP_CODE ret){
 // http处理
 void http_conn::process(){
     HTTP_CODE read_ret = process_read();
+    // 请求不完整，继续注册读事件
     if(read_ret == NO_REQUEST){
         modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
         return;
