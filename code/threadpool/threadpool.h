@@ -23,7 +23,7 @@ public:
 
 private:
     // 工作线程运行函数，需要是静态函数，因为pthread_create()第三个参数是(void *)，而成员函数会编译为带有this指针参数，从而不能匹配
-    // 静态成员函数没有this指针
+    // 静态成员函数没有this指针，但不能访问非静态成员变量，因此在内部调用run
     static void* worker(void *arg);
     void run();
 

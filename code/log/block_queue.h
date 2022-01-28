@@ -123,6 +123,7 @@ public:
     bool pop(T &item){
         m_mutex.lock();
         // 多个线程竞争资源，wait成功返回不一定还有资源，所以使用while每次检查
+        // 先加锁防止在条件判断以后、进入阻塞之前有其它线程释放信号而导致信号无效
         while(m_size <= 0){
             if(!m_cond.wait(m_mutex.get())){
                 m_mutex.unlock();
